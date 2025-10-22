@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getMovieDetails } from "@/lib/tmdb";
 import MovieCard from "@/components/ui/MovieCard";
 import Link from "next/link";
+import Reviews from "@/components/Reviews";
 
 export default async function MoviePage({ params }: { params: { id: string } }) {
   let movie;
@@ -117,6 +118,9 @@ export default async function MoviePage({ params }: { params: { id: string } }) 
           </div>
         </div>
       </div>
+
+      {/* User Reviews */}
+      <Reviews movieId={Number(params.id)} />
     </main>
   );
 }

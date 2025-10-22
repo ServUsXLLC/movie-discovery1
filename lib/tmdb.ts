@@ -1,22 +1,24 @@
 // lib/tmdb.ts
-const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
-const BASE = "https://api.themoviedb.org/3";
+//const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+//const BASE = "https://api.themoviedb.org/3";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const BASE = `${API_URL}/tmdb`;
+
 
 // Debug log to confirm if env variable is loaded
-console.log("TMDB API KEY from env:", API_KEY);
+console.log("TMDB API KEY from env:", API_URL);
 
 async function tmdbFetch(
   path: string,
   params: Record<string, string | number> = {}
 ) {
-  if (!API_KEY) {
+  if (!API_URL) {
     throw new Error(
       "TMDB API key is missing. Please check your .env.local file."
     );
   }
 
   const url = new URL(`${BASE}${path}`);
-  url.searchParams.set("api_key", API_KEY);
 
   Object.entries(params).forEach(([k, v]) =>
     url.searchParams.set(k, String(v))

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "./useAuth";
 
 type Review = {
   movieId: number;
@@ -16,8 +17,10 @@ type MovieState = {
 };
 
 const STORAGE_KEY = "movieAppData";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api").replace(/\/$/, "");
 
 export function useMovieStorage() {
+  const { user, isAuthenticated } = useAuth();
   const [data, setData] = useState<MovieState>({
     watchlist: [],
     favorites: [],
@@ -25,36 +28,157 @@ export function useMovieStorage() {
     reviews: [],
   });
 
-  // Load from localStorage
+  // Load from localStorage (fallback for non-authenticated users)
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setData(JSON.parse(saved));
+    if (!isAuthenticated) {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setData(JSON.parse(saved));
+      }
     }
-  }, []);
+  }, [isAuthenticated]);
 
-  // Save to localStorage whenever data changes
+  // Load from database when user is authenticated
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data]);
+    if (isAuthenticated && user?.id) {
+      loadUserData(user.id);
+    }
+  }, [isAuthenticated, user?.id]);
+
+  // Save to localStorage for non-authenticated users
+  useEffect(() => {
+    if (!isAuthenticated) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+  }, [data, isAuthenticated]);
+
+  const loadUserData = async (userId: number) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      // Load watchlist
+      const watchlistRes = await fetch(`${API_BASE}/lists/${userId}/watchlist`, { headers });
+      const watchlistData = watchlistRes.ok ? await watchlistRes.json() : [];
+      
+      // Load favorites
+      const favoritesRes = await fetch(`${API_BASE}/lists/${userId}/favorites`, { headers });
+      const favoritesData = favoritesRes.ok ? await favoritesRes.json() : [];
+
+      setData(prev => ({
+        ...prev,
+        watchlist: watchlistData.map((item: any) => item.movie_id),
+        favorites: favoritesData.map((item: any) => item.movie_id),
+      }));
+    } catch (error) {
+      console.error("Failed to load user data:", error);
+    }
+  };
 
   // --- Actions ---
-  const toggleWatchlist = (movieId: number) => {
+  const toggleWatchlist = async (movieId: number) => {
+    const isInWatchlist = data.watchlist.includes(movieId);
+    
+    // Update local state immediately for responsive UI
     setData((prev) => ({
       ...prev,
-      watchlist: prev.watchlist.includes(movieId)
+      watchlist: isInWatchlist
         ? prev.watchlist.filter((id) => id !== movieId)
         : [...prev.watchlist, movieId],
     }));
+
+    // Save to database if authenticated
+    if (isAuthenticated && user?.id) {
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        if (isInWatchlist) {
+          // Remove from watchlist
+          await fetch(`${API_BASE}/lists/?user_id=${user.id}&movie_id=${movieId}&kind=watchlist`, {
+            method: "DELETE",
+            headers,
+          });
+        } else {
+          // Add to watchlist
+          await fetch(`${API_BASE}/lists/`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              user_id: user.id,
+              movie_id: movieId,
+              kind: "watchlist",
+            }),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to update watchlist:", error);
+        // Revert local state on error
+        setData((prev) => ({
+          ...prev,
+          watchlist: isInWatchlist
+            ? [...prev.watchlist, movieId]
+            : prev.watchlist.filter((id) => id !== movieId),
+        }));
+      }
+    }
   };
 
-  const toggleFavorite = (movieId: number) => {
+  const toggleFavorite = async (movieId: number) => {
+    const isInFavorites = data.favorites.includes(movieId);
+    
+    // Update local state immediately for responsive UI
     setData((prev) => ({
       ...prev,
-      favorites: prev.favorites.includes(movieId)
+      favorites: isInFavorites
         ? prev.favorites.filter((id) => id !== movieId)
         : [...prev.favorites, movieId],
     }));
+
+    // Save to database if authenticated
+    if (isAuthenticated && user?.id) {
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        if (isInFavorites) {
+          // Remove from favorites
+          await fetch(`${API_BASE}/lists/?user_id=${user.id}&movie_id=${movieId}&kind=favorites`, {
+            method: "DELETE",
+            headers,
+          });
+        } else {
+          // Add to favorites
+          await fetch(`${API_BASE}/lists/`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              user_id: user.id,
+              movie_id: movieId,
+              kind: "favorites",
+            }),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to update favorites:", error);
+        // Revert local state on error
+        setData((prev) => ({
+          ...prev,
+          favorites: isInFavorites
+            ? [...prev.favorites, movieId]
+            : prev.favorites.filter((id) => id !== movieId),
+        }));
+      }
+    }
   };
 
   const toggleWatched = (movieId: number) => {

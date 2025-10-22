@@ -5,6 +5,7 @@ import SearchDialog from "@/components/SearchDialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import WatchlistSection from "@/components/WatchlistSection";
 import FavoritesSection from "@/components/FavoritesSection";
+import UserAvatar from "@/components/UserAvatar";
 
 
 export default async function HomePage() {
@@ -47,8 +48,7 @@ export default async function HomePage() {
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Movie Discovery</h1>
         <div className="flex items-center gap-3">
-          <a href="/watchlist" className="text-sm text-blue-600 hover:underline">Watchlist</a>
-          <a href="/favorites" className="text-sm text-blue-600 hover:underline">Favorites</a>
+          <UserAvatar />
           <SearchDialog />   {/* 🔍 Search button */}
           <ThemeToggle />    {/* 🌞/🌙 Theme toggle */}
         </div>
