@@ -22,12 +22,6 @@ export default function UserAvatar() {
         >
           Register
         </Link>
-        <Link 
-          href="/admin" 
-          className="text-sm text-red-600 hover:underline"
-        >
-          Admin
-        </Link>
       </div>
     );
   }
@@ -54,16 +48,6 @@ export default function UserAvatar() {
           {user.display_name || user.email}
         </span>
       </Link>
-
-      {/* Admin Link */}
-      <div className="hidden md:flex items-center gap-2">
-        <Link 
-          href="/admin" 
-          className="text-xs text-red-600 hover:underline"
-        >
-          Admin
-        </Link>
-      </div>
 
       {/* Logout Button */}
       <button
