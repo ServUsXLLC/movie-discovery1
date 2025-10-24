@@ -19,18 +19,71 @@ export async function register(email, password, display_name) {
   }
   
 // Reviews API
-export async function createReview({ user_id, movie_id, rating, comment }) {
+export async function createReview({ tmdb_id, rating, comment }) {
+  const token = localStorage.getItem("access_token");
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
   const res = await fetch(`${getApiBase()}/reviews/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id, movie_id, rating, comment })
+    headers,
+    body: JSON.stringify({ tmdb_id, rating, comment })
   });
-  if (!res.ok) throw new Error("Failed to create review");
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Failed to create review" }));
+    throw new Error(errorData.detail || "Failed to create review");
+  }
   return res.json();
 }
 
-export async function fetchMovieReviews(movie_id) {
-  const url = `${getApiBase()}/reviews/movie/${movie_id}`;
+export async function updateReview({ review_id, rating, comment }) {
+  const token = localStorage.getItem("access_token");
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  const res = await fetch(`${getApiBase()}/reviews/${review_id}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ rating, comment })
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Failed to update review" }));
+    throw new Error(errorData.detail || "Failed to update review");
+  }
+  return res.json();
+}
+
+export async function deleteReview(review_id) {
+  const token = localStorage.getItem("access_token");
+  const headers = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  const res = await fetch(`${getApiBase()}/reviews/${review_id}`, {
+    method: "DELETE",
+    headers
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Failed to delete review" }));
+    throw new Error(errorData.detail || "Failed to delete review");
+  }
+  return res.json();
+}
+
+export async function fetchMovieReviews(tmdb_id) {
+  const url = `${getApiBase()}/reviews/movie/${tmdb_id}`;
   let res;
   try {
     res = await fetch(url);
@@ -40,6 +93,33 @@ export async function fetchMovieReviews(movie_id) {
   if (!res.ok) {
     const text = await res.text().catch(() => "<no body>");
     throw new Error(`Failed to fetch reviews: HTTP ${res.status} ${res.statusText}\nURL: ${url}\nBody: ${text}`);
+  }
+  return res.json();
+}
+
+export async function fetchMovieRatingStats(tmdb_id) {
+  const url = `${getApiBase()}/reviews/movie/${tmdb_id}/stats`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Failed to fetch movie rating stats");
+  }
+  return res.json();
+}
+
+export async function fetchUserReviews(user_id) {
+  const url = `${getApiBase()}/reviews/user/${user_id}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Failed to fetch user reviews");
+  }
+  return res.json();
+}
+
+export async function fetchRecentReviews(limit = 20) {
+  const url = `${getApiBase()}/reviews/recent?limit=${limit}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Failed to fetch recent reviews");
   }
   return res.json();
 }

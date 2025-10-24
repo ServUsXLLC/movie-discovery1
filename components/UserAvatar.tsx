@@ -49,6 +49,15 @@ export default function UserAvatar() {
         </span>
       </Link>
 
+      {/* Users Link */}
+      <Link 
+        href="/users" 
+        className="text-xs text-blue-600 hover:underline"
+        title="Discover Users"
+      >
+        Users
+      </Link>
+
       {/* Logout Button */}
       <button
         onClick={logout}

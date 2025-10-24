@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import UserActivityModal from "@/components/UserActivityModal";
 
 type DashboardStats = {
   total_users: number;
@@ -29,6 +30,8 @@ export default function AdminPage() {
   const [passwordTest, setPasswordTest] = useState<{userId: number, password: string} | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'users' | 'movies' | 'profile'>('users');
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [showUserActivity, setShowUserActivity] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -190,6 +193,16 @@ export default function AdminPage() {
                         <td className="px-4 py-2 text-sm">{u.is_active ? "Active" : "Inactive"}</td>
                         <td className="px-4 py-2 text-sm">{u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}</td>
                         <td className="px-4 py-2 text-sm space-x-2">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setSelectedUserId(u.id);
+                              setShowUserActivity(true);
+                            }}
+                            className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          >
+                            Activity
+                          </Button>
                           <Button variant="outline" onClick={() => toggle(u.id)}>Toggle</Button>
                           <Button variant="outline" onClick={() => setPasswordTest({userId: u.id, password: ""})}>Test Password</Button>
                           <Button variant="destructive" onClick={() => del(u.id)}>Delete</Button>
@@ -285,6 +298,16 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* User Activity Modal */}
+      <UserActivityModal
+        userId={selectedUserId}
+        isOpen={showUserActivity}
+        onClose={() => {
+          setShowUserActivity(false);
+          setSelectedUserId(null);
+        }}
+      />
     </div>
   );
 }

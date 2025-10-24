@@ -12,6 +12,9 @@ from app.routers.lists import router as lists_router
 from app.routers.migration import router as migration_router
 from app.routers.users import router as users_router
 from app.routers.movies import router as movies_router
+from app.routers.follows import router as follows_router
+from app.routers.user_activity import router as user_activity_router
+from app.routers.user_insights import router as user_insights_router
 
 # ------------------------------------------------------
 # Initialize FastAPI app
@@ -30,6 +33,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -60,6 +65,9 @@ app.include_router(reviews_router, prefix="/api", tags=["Reviews"])
 app.include_router(lists_router, prefix="/api", tags=["Lists"])
 app.include_router(migration_router, prefix="/api", tags=["Migration"])
 app.include_router(movies_router, prefix="/api", tags=["Movies"])
+app.include_router(follows_router, prefix="/api", tags=["Follows"])
+app.include_router(user_activity_router, prefix="/api", tags=["User Activity"])
+app.include_router(user_insights_router, prefix="/api", tags=["User Insights"])
 
 # ✅ Add the TMDB proxy router
 app.include_router(tmdb_proxy.router, prefix="/api", tags=["TMDB"])

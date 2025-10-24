@@ -35,6 +35,10 @@ class User(Base):
     # list_items = relationship(
     #     "ListItem", back_populates="user", cascade="all, delete-orphan"
     # )
+    
+    # Follow relationships (commented out to avoid circular imports)
+    # followers = relationship("Follow", foreign_keys="Follow.following_id", back_populates="following")
+    # following = relationship("Follow", foreign_keys="Follow.follower_id", back_populates="follower")
 
 
 class RefreshToken(Base):

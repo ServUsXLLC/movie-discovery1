@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import useSWR from "swr";
 import MovieCard from "@/components/ui/MovieCard"; // adjust path if needed
+import UserCard from "@/components/UserCard";
 import Image from "next/image";
 
 /**
@@ -56,7 +57,7 @@ type Movie = {
 
 /* --- Component --- */
 export default function UserDashboardPage() {
-  const [tab, setTab] = useState<"watchlist" | "favorites" | "profile">("watchlist");
+  const [tab, setTab] = useState<"watchlist" | "favorites" | "profile" | "followers" | "following">("watchlist");
 
   // Load current user profile
   const { data: user, error: userError, isValidating: userLoading } = useSWR<User>(
@@ -83,6 +84,26 @@ export default function UserDashboardPage() {
   // Convert movie IDs to full movie objects
   const [watchlist, setWatchlist] = useState<Movie[]>([]);
   const [favorites, setFavorites] = useState<Movie[]>([]);
+
+  // Fetch follow stats
+  const { data: followStats, error: followStatsError } = useSWR(
+    userId ? `${API_BASE}/follows/stats/${userId}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  // Fetch followers and following
+  const { data: followers, error: followersError } = useSWR(
+    userId && tab === "followers" ? `${API_BASE}/follows/followers/${userId}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const { data: following, error: followingError } = useSWR(
+    userId && tab === "following" ? `${API_BASE}/follows/following/${userId}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
   useEffect(() => {
     const fetchMovieDetails = async (movieIds: number[]) => {
@@ -161,22 +182,34 @@ export default function UserDashboardPage() {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="flex items-center justify-between">
-            <div className="flex space-x-3">
+            <div className="flex space-x-3 overflow-x-auto">
               <button
                 onClick={() => setTab("watchlist")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${tab === "watchlist" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap ${tab === "watchlist" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
               >
-                Your Watchlist
+                Watchlist ({watchlistItems?.length || 0})
               </button>
               <button
                 onClick={() => setTab("favorites")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${tab === "favorites" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap ${tab === "favorites" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
               >
-                Your Favorites
+                Favorites ({favoritesItems?.length || 0})
+              </button>
+              <button
+                onClick={() => setTab("followers")}
+                className={`px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap ${tab === "followers" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+              >
+                Followers ({followStats?.followers_count || 0})
+              </button>
+              <button
+                onClick={() => setTab("following")}
+                className={`px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap ${tab === "following" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+              >
+                Following ({followStats?.following_count || 0})
               </button>
               <button
                 onClick={() => setTab("profile")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${tab === "profile" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap ${tab === "profile" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
               >
                 Profile
               </button>
@@ -243,6 +276,58 @@ export default function UserDashboardPage() {
                           <div className="mt-2 text-sm text-gray-600">Rating: 4/5 — "Great movie!"</div>
                        */}
                     </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {tab === "followers" && (
+            <section>
+              <h2 className="text-lg font-semibold mb-3">Your Followers</h2>
+              
+              {followersError && <div className="text-red-500">Failed to load followers</div>}
+              
+              {!followers?.length && !followersError ? (
+                <div className="p-6 bg-white rounded shadow text-gray-500">No followers yet.</div>
+              ) : (
+                <div className="space-y-4">
+                  {followers?.map((follower: any) => (
+                    <UserCard
+                      key={follower.id}
+                      user={follower}
+                      showFollowButton={true}
+                      onFollowChange={(userId, isFollowing) => {
+                        // Update the followers list
+                        // This is a simple approach - in a real app you might want to refetch
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {tab === "following" && (
+            <section>
+              <h2 className="text-lg font-semibold mb-3">You're Following</h2>
+              
+              {followingError && <div className="text-red-500">Failed to load following</div>}
+              
+              {!following?.length && !followingError ? (
+                <div className="p-6 bg-white rounded shadow text-gray-500">Not following anyone yet.</div>
+              ) : (
+                <div className="space-y-4">
+                  {following?.map((user: any) => (
+                    <UserCard
+                      key={user.id}
+                      user={user}
+                      showFollowButton={true}
+                      onFollowChange={(userId, isFollowing) => {
+                        // Update the following list
+                        // This is a simple approach - in a real app you might want to refetch
+                      }}
+                    />
                   ))}
                 </div>
               )}
