@@ -55,7 +55,7 @@ def create_review(
     existing_review = db.query(Review).filter(
         and_(
             Review.user_id == current_user.id,
-            Review.tmdb_id == body.tmdb_id
+            Review.movie_id == body.tmdb_id
         )
     ).first()
     
@@ -68,7 +68,8 @@ def create_review(
     # Create new review
     review = Review(
         user_id=current_user.id,
-        tmdb_id=body.tmdb_id,
+        movie_id=body.tmdb_id,  # Store tmdb_id in movie_id field
+        tmdb_id=body.tmdb_id,   # Also store in tmdb_id for consistency
         rating=body.rating,
         comment=body.comment,
     )
@@ -81,7 +82,7 @@ def create_review(
         user_id=review.user_id,
         user_name=current_user.display_name,
         user_avatar=current_user.avatar,
-        tmdb_id=review.tmdb_id,
+        tmdb_id=review.movie_id,  # Return movie_id as tmdb_id for API consistency
         rating=review.rating,
         comment=review.comment,
         created_at=review.created_at,
@@ -120,7 +121,7 @@ def update_review(
         user_id=review.user_id,
         user_name=current_user.display_name,
         user_avatar=current_user.avatar,
-        tmdb_id=review.tmdb_id,
+        tmdb_id=review.movie_id,  # Return movie_id as tmdb_id for API consistency
         rating=review.rating,
         comment=review.comment,
         created_at=review.created_at,
@@ -140,7 +141,7 @@ def get_movie_reviews(
     reviews = (
         db.query(Review, User)
         .join(User, Review.user_id == User.id)
-        .filter(Review.tmdb_id == tmdb_id)
+        .filter(Review.movie_id == tmdb_id)
         .order_by(desc(Review.created_at))
         .offset(skip)
         .limit(limit)
@@ -153,7 +154,7 @@ def get_movie_reviews(
             user_id=review.user_id,
             user_name=user.display_name,
             user_avatar=user.avatar,
-            tmdb_id=review.tmdb_id,
+            tmdb_id=review.movie_id,  # Return movie_id as tmdb_id for API consistency
             rating=review.rating,
             comment=review.comment,
             created_at=review.created_at,
@@ -167,7 +168,7 @@ def get_movie_reviews(
 def get_movie_rating_stats(tmdb_id: int, db: Session = Depends(get_db)):
     """Get rating statistics for a movie"""
     
-    reviews = db.query(Review).filter(Review.tmdb_id == tmdb_id).all()
+    reviews = db.query(Review).filter(Review.movie_id == tmdb_id).all()
     
     if not reviews:
         return MovieRatingStats(
@@ -223,7 +224,7 @@ def get_user_reviews(
             user_id=review.user_id,
             user_name=user.display_name,
             user_avatar=user.avatar,
-            tmdb_id=review.tmdb_id,
+            tmdb_id=review.movie_id,  # Return movie_id as tmdb_id for API consistency
             rating=review.rating,
             comment=review.comment,
             created_at=review.created_at,
@@ -244,7 +245,7 @@ def get_user_movie_review(
     review = db.query(Review, User).join(User, Review.user_id == User.id).filter(
         and_(
             Review.user_id == user_id,
-            Review.tmdb_id == tmdb_id
+            Review.movie_id == tmdb_id
         )
     ).first()
     
@@ -258,7 +259,7 @@ def get_user_movie_review(
         user_id=review_obj.user_id,
         user_name=user.display_name,
         user_avatar=user.avatar,
-        tmdb_id=review_obj.tmdb_id,
+        tmdb_id=review_obj.movie_id,  # Return movie_id as tmdb_id for API consistency
         rating=review_obj.rating,
         comment=review_obj.comment,
         created_at=review_obj.created_at,
@@ -308,7 +309,7 @@ def get_recent_reviews(
             user_id=review.user_id,
             user_name=user.display_name,
             user_avatar=user.avatar,
-            tmdb_id=review.tmdb_id,
+            tmdb_id=review.movie_id,  # Return movie_id as tmdb_id for API consistency
             rating=review.rating,
             comment=review.comment,
             created_at=review.created_at,
