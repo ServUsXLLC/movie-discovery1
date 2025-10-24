@@ -69,7 +69,6 @@ def create_review(
     review = Review(
         user_id=current_user.id,
         movie_id=body.tmdb_id,  # Store tmdb_id in movie_id field
-        tmdb_id=body.tmdb_id,   # Also store in tmdb_id for consistency
         rating=body.rating,
         comment=body.comment,
     )

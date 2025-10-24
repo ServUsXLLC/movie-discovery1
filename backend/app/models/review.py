@@ -11,7 +11,6 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     movie_id = Column(Integer, nullable=False, index=True)  # TMDB movie ID (kept as movie_id for compatibility)
-    tmdb_id = Column(Integer, nullable=True, index=True)  # Alias for movie_id
     rating = Column(Integer, nullable=False)  # Rating 1-10
     comment = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
